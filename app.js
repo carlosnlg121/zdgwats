@@ -84,7 +84,7 @@ client.on('message', async msg => {
   else if (msg.body !== null) {
     const contact = await msg.getContact();
     const article = { body: msg.body, to: `${contact.number}`};
-    const data = await axios.post('https://webhook.site/b12f24ff-579c-44c7-9604-1811028ca0c5', article).then(res => res.data);
+    const data = await axios.post('http://localhost:8080/Webhook/', article).then(res => res.data);
     data; // 'Hello, World!'
   }
 
@@ -394,6 +394,60 @@ app.post('/send-button', [
 });
 
 
+
+
+// Send button
+app.post('/send-buttons', [
+  body('number').notEmpty(),
+  body('buttonBody').notEmpty(),
+  body('bts'),
+  body('buttonTitle').notEmpty(),
+  body('buttonFooter').notEmpty()
+  
+], async (req, res) => {
+  const errors = validationResult(req).formatWith(({
+    msg
+  }) => {
+    return msg;
+  });
+
+  if (!errors.isEmpty()) {
+    return res.status(422).json({
+      status: false,
+      message: errors.mapped()
+    });
+  }
+
+  const number = phoneNumberFormatter(req.body.number);
+  const buttonBody = req.body.buttonBody;   
+  const buttonTitle = req.body.buttonTitle;
+  const buttonFooter = req.body.buttonFooter;
+  console.log('bt: ' + req.body.bts);
+  const button = new Buttons(buttonBody,req.body.bts,buttonTitle,buttonFooter);
+
+  const isRegisteredNumber = await checkRegisteredNumber(number);
+
+  if (!isRegisteredNumber) {
+    return res.status(422).json({
+      status: false,
+      message: 'The number is not registered'
+    });
+  }
+
+  client.sendMessage(number, button).then(response => {
+    res.status(200).json({
+      status: true,
+      response: response
+    });
+  }).catch(err => {
+    res.status(500).json({
+      status: false,
+      response: err
+    });
+  });
+});
+
+
 app.post('/send-list', [
   body('number').notEmpty(),
   body('ListItem1').notEmpty(),
@@ -404,6 +458,8 @@ app.post('/send-list', [
   body('desc3').notEmpty(),
   body('ListItem4').notEmpty(),
   body('desc4').notEmpty(),
+  body('ListItem5').notEmpty(),
+  body('desc5').notEmpty(),
   body('List_body').notEmpty(),
   body('btnText').notEmpty(),
   body('Title').notEmpty(),
@@ -433,12 +489,68 @@ app.post('/send-list', [
   const desc3 = req.body.desc3;
   const ListItem4 = req.body.ListItem4;
   const desc4 = req.body.desc4;
+  const ListItem5 = req.body.ListItem5;
+  const desc5 = req.body.desc5;
   const List_body = req.body.List_body;
   const btnText = req.body.btnText;
   const Title = req.body.Title;
   const footer = req.body.footer;
 
-  const sections = [{title:sectionTitle,rows:[{title:ListItem1, description: desc1},{title:ListItem2, description: desc2},{title:ListItem3, description: desc3},{title:ListItem4, description: desc4}]}];
+  const sections = [{title:sectionTitle,rows:[{title:ListItem1, description: desc1},{title:ListItem2, description: desc2},{title:ListItem3, description: desc3},{title:ListItem4, description: desc4},{title:ListItem5, description: desc5}]}];
+  const list = new List(List_body,btnText,sections,Title,footer);
+
+  const isRegisteredNumber = await checkRegisteredNumber(number);
+
+  if (!isRegisteredNumber) {
+    return res.status(422).json({
+      status: false,
+      message: 'The number is not registered'
+    });
+  }
+
+  client.sendMessage(number, list).then(response => {
+    res.status(200).json({
+      status: true,
+      response: response
+    });
+  }).catch(err => {
+    res.status(500).json({
+      status: false,
+      response: err
+    });
+  });
+});
+
+app.post('/send-lists', [
+  body('number').notEmpty(),
+  body('List').notEmpty(),
+  body('List_body').notEmpty(),
+  body('btnText').notEmpty(),
+  body('Title').notEmpty(),
+  body('footer').notEmpty()
+  
+], async (req, res) => {
+  const errors = validationResult(req).formatWith(({
+    msg
+  }) => {
+    return msg;
+  });
+
+  if (!errors.isEmpty()) {
+    return res.status(422).json({
+      status: false,
+      message: errors.mapped()
+    });
+  }
+
+  const number = phoneNumberFormatter(req.body.number);
+  const sectionTitle = req.body.sectionTitle;
+  const List_body = req.body.List_body;
+  const btnText = req.body.btnText;
+  const Title = req.body.Title;
+  const footer = req.body.footer;
+
+  const sections = [{title:sectionTitle,rows: req.body.List}];
   const list = new List(List_body,btnText,sections,Title,footer);
 
   const isRegisteredNumber = await checkRegisteredNumber(number);
