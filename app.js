@@ -82,10 +82,14 @@ client.on('message', async msg => {
   }
   
   else if (msg.body !== null) {
-    const contact = await msg.getContact();
-    const article = { body: msg.body, to: `${contact.number}`};
-    const data = await axios.post('http://localhost:8080/Webhook/', article).then(res => res.data);
-    data; // 'Hello, World!'
+	  try {
+		const contact = await msg.getContact();
+		const article = { body: msg.body, to: `${contact.number}`};
+		const data = await axios.post('https://app-webhoo.herokuapp.com/Webhook/', article).then(res => res.data);
+		data; // 'Hello, World!'
+	  }catch (e) {  
+	}   
+    
   }
 
 });
